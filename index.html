@@ -214,7 +214,7 @@
 
     <div class="output-area">
         <div class="output-label">Terminal Output</div>
-        <pre id="output-display">// Awaiting command...</pre>
+        <pre id="output-display">// Downloading WASM Engine... Please wait.</pre>
     </div>
 
     <div class="footer">
@@ -234,10 +234,17 @@
             return;
         }
 
-        // WebAssembly file:// Protocol Check
-        if (typeof jq === 'undefined') {
+        // 1. GERÇEK Protokol Kontrolü (Sadece cidden file:// ise uyar)
+        if (window.location.protocol === 'file:') {
             outDisplay.style.color = '#ff7b72';
-            outDisplay.innerText = "System Halt: WebAssembly Engine failed to load.\n\nReason: You opened this file directly from your computer (file://). Browsers block WASM files from loading locally due to security policies.\n\nFix: Please run this through a local web server (e.g., 'python3 -m http.server' or VS Code Live Server) or upload it to GitHub Pages.";
+            outDisplay.innerText = "System Halt: Browsers block local WASM execution.\n\nReason: You opened this file directly (file://). Please use GitHub Pages or a local server.";
+            return;
+        }
+
+        // 2. Motor Hala İnmemişse (Erken basılma durumu)
+        if (typeof jq === 'undefined') {
+            outDisplay.style.color = '#ffb000';
+            outDisplay.innerText = 'WASM Engine is still downloading from CDN... Please try again in a few seconds.';
             return;
         }
 
@@ -306,10 +313,26 @@
     urlInput.addEventListener('keydown', triggerEnter);
     jqInput.addEventListener('keydown', triggerEnter);
 
-    window.addEventListener('DOMContentLoaded', () => {
+    // Akıllı Auto-Run Mekanizması: Motorun inmesini sabırla bekler!
+    window.addEventListener('load', () => {
         urlInput.value = 'https://jsonplaceholder.typicode.com/users/1';
         jqInput.value = '.name';
-        setTimeout(() => executePipeline(urlInput.value, jqInput.value), 500);
+        
+        let attempts = 0;
+        let waitInterval = setInterval(() => {
+            // Eğer motor CDN'den indiyse, hemen çalıştır ve beklemeyi bırak
+            if (typeof jq !== 'undefined') {
+                clearInterval(waitInterval);
+                executePipeline(urlInput.value, jqInput.value);
+            } 
+            // Eğer 5 saniye geçtiyse ve hala inmediyse pes et ve uyarı ver
+            else if (attempts > 10) {
+                clearInterval(waitInterval);
+                outDisplay.style.color = '#ff7b72';
+                outDisplay.innerText = "Error: WASM Engine failed to download. Check your ad-blocker or internet connection.";
+            }
+            attempts++;
+        }, 500); // Her yarım saniyede bir kontrol et
     });
 </script>
 
