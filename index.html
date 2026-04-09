@@ -5,35 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickPipe | Inspect APIs instantly</title>
     
-    <script>
-        // 1. Web3 cüzdanlarının sinsi tuzaklarını etkisiz hale getir
-        window.define = undefined;
-        
-        // 2. Kendi güvenli "Karantina" paketimizi oluştur
-        window._isoModule = { exports: {} };
-        window.module = window._isoModule;
-        window.exports = window._isoModule.exports;
-    </script>
+    <script src="https://unpkg.com/jq-web@0.4.0/jq.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/jq-web@0.6.2/jq.wasm.min.js"></script>
-    
-    <script>
-        // 4. Motoru karantina paketinden kendi ellerimizle yakala
-        let exportedEngine = window._isoModule.exports;
-        
-        // Eğer paket boşsa (nadiren olur), varsayılan globale bak
-        if (!exportedEngine || typeof exportedEngine.then !== 'function') {
-            exportedEngine = window.jq;
-        }
-        
-        // Asıl motorumuzu güvenli bir kasaya koy
-        window.jqPromise = exportedEngine;
-        
-        // 5. Çevreyi temizle (İz bırakma)
-        delete window.module;
-        delete window.exports;
-        delete window._isoModule;
-    </script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -241,11 +214,11 @@
 
     <div class="output-area">
         <div class="output-label">Terminal Output</div>
-        <pre id="output-display">// Initializing WebAssembly Engine... Please wait.</pre>
+        <pre id="output-display">// Initializing Engine... Please wait.</pre>
     </div>
 
     <div class="footer">
-        Powered by pure WebAssembly. Fully local, zero tracking.
+        Powered by local JS Engine. Zero tracking.
     </div>
 </div>
 
@@ -253,36 +226,11 @@
     const urlInput = document.getElementById('url-input');
     const jqInput = document.getElementById('jq-input');
     const outDisplay = document.getElementById('output-display');
-    
-    let jqEngine = null;
 
-    // 🚀 AŞAMA 1: Motoru Doğrulama ve Yükleme
-    if (window.jqPromise && typeof window.jqPromise.then === 'function') {
-        window.jqPromise.then(engine => {
-            jqEngine = engine;
-            
-            // Motor başarıyla yüklendi! Eğer kutular doluysa (Sayfa yenilendiyse) hemen çalıştır.
-            if (urlInput.value) {
-                executePipeline(urlInput.value, jqInput.value);
-            } else {
-                outDisplay.style.color = '#7ee787';
-                outDisplay.innerText = '// Pipeline ready. Awaiting command...';
-            }
-        }).catch(err => {
-            // Eğer motor kendi iç dosyasını (WASM) internetten bulamazsa hatayı gizlemez, ekrana kusar!
-            outDisplay.style.color = '#ff7b72';
-            outDisplay.innerText = `System Halt: WebAssembly Engine crashed during initialization.\nDetails: ${err}`;
-        });
-    } else {
-        outDisplay.style.color = '#ff7b72';
-        outDisplay.innerText = "System Halt: Failed to capture WASM Engine from CDN. Your ad-blocker or wallet extension might be blocking the script execution entirely.";
-    }
-
-    // 🚀 AŞAMA 2: İşlem Boru Hattı (Pipeline)
     async function executePipeline(url, jqQuery) {
-        if (!jqEngine) {
+        if (typeof jq === 'undefined') {
             outDisplay.style.color = '#ffb000';
-            outDisplay.innerText = 'WASM Engine is still loading... Please wait.';
+            outDisplay.innerText = 'Engine is still downloading. Please click run again in a moment.';
             return;
         }
 
@@ -299,13 +247,12 @@
             let rawJson;
             
             try {
-                // STEP 1: Direkt Fetch
+                // STEP 1: Direct fetch
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 rawJson = await response.json();
             } catch (directError) {
-                // STEP 2: CORS Proxy Fallback
-                console.log("Direct fetch failed, trying proxy...", directError);
+                // STEP 2: Proxy fallback
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 const proxyResponse = await fetch(proxyUrl);
                 
@@ -319,12 +266,11 @@
                 return;
             }
 
-            outDisplay.innerText = 'Processing with WebAssembly JQ...';
+            outDisplay.innerText = 'Processing JQ Filter...';
 
-            // WASM işlemi tarayıcıyı dondurmasın diye ufak bir bekleme (Asenkron hissi)
             setTimeout(() => {
                 try {
-                    const result = jqEngine.json(rawJson, jqQuery);
+                    const result = jq.json(rawJson, jqQuery);
                     outDisplay.style.color = '#7ee787'; 
                     
                     if (typeof result === 'string') {
@@ -344,7 +290,6 @@
         }
     }
 
-    // Buton Dinleyicileri
     document.getElementById('run-btn').addEventListener('click', () => {
         executePipeline(urlInput.value.trim(), jqInput.value.trim());
     });
@@ -355,15 +300,27 @@
         executePipeline(urlInput.value, jqInput.value);
     });
 
-    // Klavyeden Enter'a basınca çalışsın
     const triggerEnter = (e) => { if (e.key === 'Enter') document.getElementById('run-btn').click(); };
     urlInput.addEventListener('keydown', triggerEnter);
     jqInput.addEventListener('keydown', triggerEnter);
 
-    // İlk açılışta verileri doldur. Motor "then" bloğunda yüklendiğinde otomatik çalışacak!
+    // Sayfa açıldığında motorun inmesini arka planda kontrol eden basit döngü
     window.addEventListener('DOMContentLoaded', () => {
         urlInput.value = 'https://jsonplaceholder.typicode.com/users/1';
         jqInput.value = '.name';
+        
+        let attempts = 0;
+        let checker = setInterval(() => {
+            if (typeof jq !== 'undefined') {
+                clearInterval(checker);
+                executePipeline(urlInput.value, jqInput.value);
+            } else if (attempts > 30) { // 15 saniye bekler
+                clearInterval(checker);
+                outDisplay.style.color = '#ff7b72';
+                outDisplay.innerText = 'System Halt: Could not download the core engine from Unpkg. Your network might be blocking JS CDNs.';
+            }
+            attempts++;
+        }, 500);
     });
 </script>
 
