@@ -5,28 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickPipe | Inspect APIs instantly</title>
     
-        <script>
-        // Adım 1: Cüzdan eklentilerinin bıraktığı sahte tuzakları yedekle ve yok et
-        const _module = window.module;
-        const _exports = window.exports;
-        const _define = window.define;
-        window.module = undefined;
-        window.exports = undefined;
+    <script>
+        // 1. Web3 cüzdanlarının sinsi tuzaklarını etkisiz hale getir
         window.define = undefined;
+        
+        // 2. Kendi güvenli "Karantina" paketimizi oluştur
+        window._isoModule = { exports: {} };
+        window.module = window._isoModule;
+        window.exports = window._isoModule.exports;
     </script>
     
-    <script src="https://cdn.jsdelivr.net/npm/jq-web@0.4.0/jq.wasm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jq-web@0.6.2/jq.wasm.min.js"></script>
     
     <script>
-       
-        window.module = _module;
-        window.exports = _exports;
-        window.define = _define;
+        // 4. Motoru karantina paketinden kendi ellerimizle yakala
+        let exportedEngine = window._isoModule.exports;
+        
+        // Eğer paket boşsa (nadiren olur), varsayılan globale bak
+        if (!exportedEngine || typeof exportedEngine.then !== 'function') {
+            exportedEngine = window.jq;
+        }
+        
+        // Asıl motorumuzu güvenli bir kasaya koy
+        window.jqPromise = exportedEngine;
+        
+        // 5. Çevreyi temizle (İz bırakma)
+        delete window.module;
+        delete window.exports;
+        delete window._isoModule;
     </script>
-  
-
-
-    
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -234,7 +241,7 @@
 
     <div class="output-area">
         <div class="output-label">Terminal Output</div>
-        <pre id="output-display">// Downloading WASM Engine... Please wait.</pre>
+        <pre id="output-display">// Initializing WebAssembly Engine... Please wait.</pre>
     </div>
 
     <div class="footer">
@@ -246,25 +253,42 @@
     const urlInput = document.getElementById('url-input');
     const jqInput = document.getElementById('jq-input');
     const outDisplay = document.getElementById('output-display');
+    
+    let jqEngine = null;
 
+    // 🚀 AŞAMA 1: Motoru Doğrulama ve Yükleme
+    if (window.jqPromise && typeof window.jqPromise.then === 'function') {
+        window.jqPromise.then(engine => {
+            jqEngine = engine;
+            
+            // Motor başarıyla yüklendi! Eğer kutular doluysa (Sayfa yenilendiyse) hemen çalıştır.
+            if (urlInput.value) {
+                executePipeline(urlInput.value, jqInput.value);
+            } else {
+                outDisplay.style.color = '#7ee787';
+                outDisplay.innerText = '// Pipeline ready. Awaiting command...';
+            }
+        }).catch(err => {
+            // Eğer motor kendi iç dosyasını (WASM) internetten bulamazsa hatayı gizlemez, ekrana kusar!
+            outDisplay.style.color = '#ff7b72';
+            outDisplay.innerText = `System Halt: WebAssembly Engine crashed during initialization.\nDetails: ${err}`;
+        });
+    } else {
+        outDisplay.style.color = '#ff7b72';
+        outDisplay.innerText = "System Halt: Failed to capture WASM Engine from CDN. Your ad-blocker or wallet extension might be blocking the script execution entirely.";
+    }
+
+    // 🚀 AŞAMA 2: İşlem Boru Hattı (Pipeline)
     async function executePipeline(url, jqQuery) {
+        if (!jqEngine) {
+            outDisplay.style.color = '#ffb000';
+            outDisplay.innerText = 'WASM Engine is still loading... Please wait.';
+            return;
+        }
+
         if (!url) {
             outDisplay.style.color = '#ff7b72';
             outDisplay.innerText = 'Error: URL cannot be empty.';
-            return;
-        }
-
-        // 1. GERÇEK Protokol Kontrolü (Sadece cidden file:// ise uyar)
-        if (window.location.protocol === 'file:') {
-            outDisplay.style.color = '#ff7b72';
-            outDisplay.innerText = "System Halt: Browsers block local WASM execution.\n\nReason: You opened this file directly (file://). Please use GitHub Pages or a local server.";
-            return;
-        }
-
-        // 2. Motor Hala İnmemişse (Erken basılma durumu)
-        if (typeof jq === 'undefined') {
-            outDisplay.style.color = '#ffb000';
-            outDisplay.innerText = 'WASM Engine is still downloading from CDN... Please try again in a few seconds.';
             return;
         }
 
@@ -275,12 +299,12 @@
             let rawJson;
             
             try {
-                // STEP 1: Try fetching directly first
+                // STEP 1: Direkt Fetch
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 rawJson = await response.json();
             } catch (directError) {
-                // STEP 2: Fallback to proxy on CORS failure
+                // STEP 2: CORS Proxy Fallback
                 console.log("Direct fetch failed, trying proxy...", directError);
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 const proxyResponse = await fetch(proxyUrl);
@@ -297,9 +321,10 @@
 
             outDisplay.innerText = 'Processing with WebAssembly JQ...';
 
+            // WASM işlemi tarayıcıyı dondurmasın diye ufak bir bekleme (Asenkron hissi)
             setTimeout(() => {
                 try {
-                    const result = jq.json(rawJson, jqQuery);
+                    const result = jqEngine.json(rawJson, jqQuery);
                     outDisplay.style.color = '#7ee787'; 
                     
                     if (typeof result === 'string') {
@@ -319,6 +344,7 @@
         }
     }
 
+    // Buton Dinleyicileri
     document.getElementById('run-btn').addEventListener('click', () => {
         executePipeline(urlInput.value.trim(), jqInput.value.trim());
     });
@@ -329,30 +355,15 @@
         executePipeline(urlInput.value, jqInput.value);
     });
 
+    // Klavyeden Enter'a basınca çalışsın
     const triggerEnter = (e) => { if (e.key === 'Enter') document.getElementById('run-btn').click(); };
     urlInput.addEventListener('keydown', triggerEnter);
     jqInput.addEventListener('keydown', triggerEnter);
 
-    // Akıllı Auto-Run Mekanizması: Motorun inmesini sabırla bekler!
-    window.addEventListener('load', () => {
+    // İlk açılışta verileri doldur. Motor "then" bloğunda yüklendiğinde otomatik çalışacak!
+    window.addEventListener('DOMContentLoaded', () => {
         urlInput.value = 'https://jsonplaceholder.typicode.com/users/1';
         jqInput.value = '.name';
-        
-        let attempts = 0;
-        let waitInterval = setInterval(() => {
-            // Eğer motor CDN'den indiyse, hemen çalıştır ve beklemeyi bırak
-            if (typeof jq !== 'undefined') {
-                clearInterval(waitInterval);
-                executePipeline(urlInput.value, jqInput.value);
-            } 
-            // Eğer 5 saniye geçtiyse ve hala inmediyse pes et ve uyarı ver
-            else if (attempts > 10) {
-                clearInterval(waitInterval);
-                outDisplay.style.color = '#ff7b72';
-                outDisplay.innerText = "Error: WASM Engine failed to download. Check your ad-blocker or internet connection.";
-            }
-            attempts++;
-        }, 500); // Her yarım saniyede bir kontrol et
     });
 </script>
 
