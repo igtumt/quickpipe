@@ -19,7 +19,6 @@
             align-items: center;
             min-height: 100vh;
         }
-        /* YENİ: Göz yormayan, daha şık ve profesyonel Top Banner */
         .top-banner {
             width: 100%;
             background-color: #1f2428;
@@ -33,11 +32,10 @@
         }
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 850px; /* Terminali büyüttüğümüz için container'ı da hafif genişlettik */
             padding: 50px 20px;
             box-sizing: border-box;
         }
-        /* YENİ: Büyütülmüş ve markalaşmış Logo */
         .logo {
             font-size: 26px;
             font-weight: 900;
@@ -56,7 +54,6 @@
             margin-bottom: 40px;
             text-align: center;
         }
-        /* YENİ: Daha vurucu, çiziksiz Ana Başlık */
         .header h1 {
             font-size: 34px;
             color: #c9d1d9;
@@ -67,18 +64,25 @@
         .header h1 span {
             color: #58a6ff;
         }
-        /* YENİ: Vurgulu Alt Başlık (No Backend) */
         .header p {
-            color: #8b949e;
-            font-size: 17px;
+            color: #c9d1d9;
+            font-size: 18px;
+            font-weight: 500;
             margin: 0 0 8px 0;
             line-height: 1.5;
+        }
+        /* YENİ: Kritik beklenti yönetimi cümlesi */
+        .critical-note {
+            color: #8b949e !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            margin-bottom: 15px !important;
         }
         .highlight-badge {
             display: inline-block;
             background-color: rgba(46, 160, 67, 0.15);
             color: #7ee787;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 12px;
             font-size: 13px;
             font-weight: 600;
@@ -90,7 +94,7 @@
             border: 1px solid #30363d;
             border-radius: 8px;
             padding: 25px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
         .form-row {
@@ -114,7 +118,7 @@
             padding: 14px;
             border-radius: 6px;
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 14px;
+            font-size: 15px; /* İnput fontu da hafif büyüdü */
             outline: none;
             transition: border-color 0.2s;
         }
@@ -161,58 +165,56 @@
             background-color: #30363d;
             color: #ffffff;
         }
+        /* YENİ: Hero Terminal! Daha büyük, daha derin. */
         .output-area {
-            background-color: #0d1117;
-            border: 1px solid #30363d;
+            background-color: #0a0d12;
+            border: 1px solid #484f58; /* Kenarlık daha belirgin */
             border-radius: 8px;
-            padding: 25px;
-            min-height: 150px;
+            padding: 35px 25px 25px 25px; /* Üst boşluk arttı */
+            min-height: 250px; /* Minimum yükseklik ciddi şekilde arttı */
             position: relative;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 4px 15px rgba(0,0,0,0.4); /* Derinlik hissi */
+            margin-bottom: 50px; /* Alt kısmı rahatlattık */
         }
         .output-label {
             position: absolute;
-            top: -10px;
+            top: -12px;
             left: 20px;
             background: #0d1117;
-            padding: 0 10px;
-            font-size: 12px;
-            color: #8b949e;
-            border: 1px solid #30363d;
+            padding: 2px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #c9d1d9; /* Yazı rengi parlatıldı */
+            border: 1px solid #484f58;
             border-radius: 12px;
         }
         pre {
             margin: 0;
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 14px;
+            font-size: 16px; /* Kod fontu büyütüldü (Hero Effect) */
             color: #7ee787;
             white-space: pre-wrap;
             word-wrap: break-word;
             line-height: 1.6;
-        }
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 12px;
-            color: #484f58;
         }
     </style>
 </head>
 <body>
 
 <div class="top-banner">
-    🚀 Faster than Postman for quick API checks
+    Stop wasting time opening Postman.
 </div>
 
 <div class="container">
     <div class="logo">
-        <svg height="24" viewBox="0 0 16 16" width="24" fill="#58a6ff"><path d="M11.28 6.78a.75.75 0 0 0-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l3.5-3.5Z"></path><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-1.5 0a6.5 6.5 0 1 0-13 0 6.5 6.5 0 0 0 13 0Z"></path></svg>
+        <svg height="28" viewBox="0 0 16 16" width="28" fill="#58a6ff"><path d="M11.28 6.78a.75.75 0 0 0-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l3.5-3.5Z"></path><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-1.5 0a6.5 6.5 0 1 0-13 0 6.5 6.5 0 0 0 13 0Z"></path></svg>
         QuickPipe
     </div>
     
     <div class="header">
         <h1>Inspect APIs instantly — <span>no installs, no setup</span></h1>
-        <p>Fetch and filter JSON instantly using a lightweight pipeline.</p>
+        <p>Paste a URL → get exactly what you need.</p>
+        <p class="critical-note">Built for quick API checks — not full-blown API clients.</p>
         <div class="highlight-badge">⚡ Runs locally in your browser (no backend)</div>
     </div>
 
@@ -230,7 +232,7 @@
         </div>
 
         <div class="button-group">
-            <button id="run-btn" class="btn-primary">Run Pipeline</button>
+            <button id="run-btn" class="btn-primary">Fetch & Filter</button>
             <button id="example-btn" class="btn-secondary">Try Example</button>
         </div>
     </div>
@@ -238,10 +240,6 @@
     <div class="output-area">
         <div class="output-label">Terminal Output</div>
         <pre id="output-display">// Ready to fetch data...</pre>
-    </div>
-
-    <div class="footer">
-        Powered by pure JavaScript. Zero tracking, zero telemetry.
     </div>
 </div>
 
@@ -263,13 +261,11 @@
         try {
             let rawJson;
             
-            // 1. Doğrudan Fetch
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 rawJson = await response.json();
             } catch (directError) {
-                // 2. CORS Engeli varsa Proxy
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 const proxyResponse = await fetch(proxyUrl);
                 if (!proxyResponse.ok) throw new Error(`HTTP Proxy Error: ${proxyResponse.status}`);
@@ -278,10 +274,8 @@
 
             let finalResult = rawJson;
             
-            // 3. JMESPath ile Gerçek JSON Filtreleme
             if (query) {
                 try {
-                    // JQ yerine jmespath kullanıyoruz, çok daha güvenli ve hızlı
                     finalResult = jmespath.search(rawJson, query);
                     
                     if (finalResult === null) {
@@ -296,7 +290,6 @@
                 }
             }
 
-            // 4. Sonucu Ekrana Bas
             outDisplay.style.color = '#7ee787'; 
             if (typeof finalResult === 'string') {
                 outDisplay.innerText = `"${finalResult}"`;
@@ -310,14 +303,12 @@
         }
     }
 
-    // Event Dinleyicileri
     document.getElementById('run-btn').addEventListener('click', () => {
         executePipeline(urlInput.value.trim(), jqInput.value.trim());
     });
 
     document.getElementById('example-btn').addEventListener('click', () => {
         urlInput.value = 'https://jsonplaceholder.typicode.com/users/1';
-        // JMESPath syntax'ı noktayla başlamaz, direkt anahtar kelime yazılır.
         jqInput.value = 'name'; 
         executePipeline(urlInput.value, jqInput.value);
     });
