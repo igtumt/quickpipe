@@ -5,7 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickPipe | Inspect APIs instantly</title>
     
-    <script src="https://unpkg.com/jq-web@0.4.0/jq.wasm.min.js"></script>
+        <script>
+        // Adım 1: Cüzdan eklentilerinin bıraktığı sahte tuzakları yedekle ve yok et
+        const _module = window.module;
+        const _exports = window.exports;
+        const _define = window.define;
+        window.module = undefined;
+        window.exports = undefined;
+        window.define = undefined;
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jq-web@0.4.0/jq.wasm.min.js"></script>
+    
+    <script>
+       
+        window.module = _module;
+        window.exports = _exports;
+        window.define = _define;
+    </script>
+  
+
 
     
     <style>
